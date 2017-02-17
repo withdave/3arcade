@@ -1,5 +1,4 @@
 # 3arcade
-==============
 
 Repository for the revamped ArcadeBlocks HTML/Flash Arcade script
 
@@ -7,9 +6,7 @@ Repository for the revamped ArcadeBlocks HTML/Flash Arcade script
 
 There is a game file package available at http://3cc.org
 
-------------
-INSTALLATION
-------------
+## Installation
 
 1. Upload the contents of the 'app' folder to the directory you want 3arcade to run from.
 
