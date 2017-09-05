@@ -3,36 +3,87 @@
 session_start();
 include("admin/config.php");
 
-// Check for requested game id
-$id = ereg_replace("[^0-9]", "", $_GET['id']);
+// Check for requested game id, cast as int
+$id = intval($_GET['id']);
+
 // If no game id, go to random game
-if ($id == "") {
-	header("Location: play.php?id=0");
-} 
-// If game id is 0, logic finds another game
-elseif ($id == 0) {
-	$lastid = ereg_replace("[^0-9]", "", $_GET['lastid']);
+if ($id == 0) {
+	$lastid = intval($_GET['lastid']);
 	if ($lastid != "") {
-		$query = "SELECT id, title FROM ".$tbprefix."games WHERE id != ".$lastid." ORDER BY RAND() LIMIT 1";
+		$query = "SELECT id, title FROM ".$tbprefix."games WHERE id != :lastid ORDER BY RAND() LIMIT 1";
 	} else {
 		$query = "SELECT id, title FROM ".$tbprefix."games ORDER BY RAND() LIMIT 1";
 	}
-	$result = mysql_query($query) or die(mysql_error());
-	$newid = mysql_result($result, 0, "id");
-	$newtitle = mysql_result($result, 0, "title");
-	header("Location: play.php?id=".$newid."&n=".$newtitle);
+	  
+  // Load query results
+  try {
+    $statement = $conn->prepare($query);
+    $statement->execute(array('lastid' => $lastid));
+    // Use fetch to pick up first row
+    $result = $statement->fetch();
+
+    $newid = $result['id'];
+    $newtitle = $result['title'];
+    
+  } catch(PDOException $e) {
+    echo 'ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message;
+  }
+
+  // Redirect to new game
+  header("Location: play.php?id=".$newid."&n=".$newtitle);
+
 }
 
 // Get requested game details if the id is valid & not random
-$query = "SELECT title, description, plays FROM ".$tbprefix."games WHERE id=".$id." ";
-$result = mysql_query($query);
-$title = mysql_result($result, 0, "title");
-$description = mysql_result($result, 0, "description");
-$plays = mysql_result($result, 0, "plays");
+$query = "SELECT title, description, plays FROM ".$tbprefix."games WHERE id=:id";
+// Load query results
+try {
+  $statement = $conn->prepare($query);
+  $statement->execute(array('id' => $id));
+  // Use fetch to pick up first row
+  $result = $statement->fetch();
+
+  // Redirect to random game if not found
+  if ($statement->rowCount() != 1) {
+    $query = "SELECT id, title FROM ".$tbprefix."games ORDER BY RAND() LIMIT 1";
+    // Load query results
+    try {
+      $statement = $conn->prepare($query);
+      $statement->execute(array('lastid' => $lastid));
+      // Use fetch to pick up first row
+      $result = $statement->fetch();
+
+      $newid = $result['id'];
+      $newtitle = $result['title'];
+      
+    } catch(PDOException $e) {
+      echo 'ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message;
+    }
+
+    // Redirect to new game
+    header("Location: play.php?id=".$newid."&n=".$newtitle);
+  }
+
+  $title = $result['title'];
+  $description = $result['description'];
+  $plays = $result['plays'];
+  
+} catch(PDOException $e) {
+  echo 'ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message;
+}
+
 // Increment the play counter
 $newplays = $plays + 1;
-$query = "UPDATE ".$tbprefix."games SET plays=".$newplays." WHERE id=".$id." ";
-$result = mysql_query($query) or die(mysql_error());
+$query = "UPDATE ".$tbprefix."games SET plays=:newplays WHERE id=:id";
+
+// Load query results
+try {
+  $statement = $conn->prepare($query);
+  $statement->execute(array('id' => $id,'newplays' => $newplays));
+    
+} catch(PDOException $e) {
+  echo 'ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message;
+}
 
 // Get admin details, check for login
 $adminlog = false;
@@ -42,13 +93,13 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
 		$_SESSION['username'] = addslashes($_SESSION['username']);
 		$_SESSION['password'] = addslashes($_SESSION['password']);
 	}
-$pgt = $_SESSION['username'];
-$pga = $_SESSION['password'];  
-if ($pgt == $admin_user) {
-if ($pga == $admin_pass) {
-$adminlog = true;
-}
-}
+  $pgt = $_SESSION['username'];
+  $pga = $_SESSION['password'];  
+  if ($pgt == $admin_user) {
+    if ($pga == $admin_pass) {
+      $adminlog = true;
+    }
+  }
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -83,7 +134,7 @@ if ($settings['advert1on']) { ?>
     <param name="quality" value="high" />
     <param name="wmode" value="opaque" />
     <param name="swfversion" value="6.0.0.0" />
-    <!-- This param tag prompts users with Flash Player 6.0 r65 and higher to download the latest version of Flash Player. Delete it if you don’t want users to see the prompt. -->
+    <!-- This param tag prompts users with Flash Player 6.0 r65 and higher to download the latest version of Flash Player. Delete it if you donï¿½t want users to see the prompt. -->
     <param name="expressinstall" value="includes/expressInstall.swf" />
     <!-- Next object tag is for non-IE browsers. So hide it from IE using IECC. -->
     <!--[if !IE]>-->
@@ -116,7 +167,7 @@ if ($settings['advert1on']) { ?>
             <param name="quality" value="high" />
             <param name="wmode" value="opaque" />
             <param name="swfversion" value="6.0.65.0" />
-            <!-- This param tag prompts users with Flash Player 6.0 r65 and higher to download the latest version of Flash Player. Delete it if you don’t want users to see the prompt. -->
+            <!-- This param tag prompts users with Flash Player 6.0 r65 and higher to download the latest version of Flash Player. Delete it if you donï¿½t want users to see the prompt. -->
             <param name="expressinstall" value="includes/expressInstall.swf" />
             <!-- Next object tag is for non-IE browsers. So hide it from IE using IECC. -->
             <!--[if !IE]>-->

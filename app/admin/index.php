@@ -2,10 +2,14 @@
 //Check if logged in
 session_start();
 include("config.php");
+
+// If log out called then clear session and redirect
 if ($_GET['logout']) {
-session_unset();
-header('Location: index.php');
+	session_unset();
+	header('Location: index.php');
 }
+
+// if login is correct then move to main
 if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
 } else {
 	if(!get_magic_quotes_gpc()) {
@@ -13,25 +17,27 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
 		$_SESSION['password'] = addslashes($_SESSION['password']);
 	}
 	$pgt = $_SESSION['username'];
-$pga = $_SESSION['password'];
-if ($pgt == $admin_user) {
-if ($pga == $admin_pass) {
-header('Location: main.php');
+	$pga = $_SESSION['password'];
+	if ($pgt == $admin_user) {
+		if ($pga == $admin_pass) {
+			header('Location: main.php');
+		}
+	}
 }
-}
-}
+
+// If login form submitted, check values and set session
 if (isset($_POST['submit'])) {
-$usr = $_POST['username'];
-$pas = $_POST['password'];	  
-if ($usr == $admin_user) {
-if ($pas == $admin_pass) {
-//Log in
-session_start();	
-	$_SESSION['username'] = $usr;	
-	$_SESSION['password'] = $pas; 	
-header('Location: main.php');
-}
-}
+	$usr = $_POST['username'];
+	$pas = $_POST['password'];	  
+	if ($usr == $admin_user) {
+		if ($pas == $admin_pass) {
+			//Log in
+			session_start();	
+				$_SESSION['username'] = $usr;	
+				$_SESSION['password'] = $pas; 	
+			header('Location: main.php');
+		}
+	}
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

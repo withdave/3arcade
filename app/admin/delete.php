@@ -1,26 +1,33 @@
 <?php
-$elog = "";
-include("config.php");
 session_start();
+include("config.php");
+
+// Check to see if access valid and redirect as appropriate
 if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
 	header('Location: index.php');
-} else {	
-$pgt = $_SESSION['username'];
-$pga = $_SESSION['password'];	  
-if ($pgt != $admin_user) {
-header('Location: index.php');
+} else {
+	$pgt = $_SESSION['username'];
+	$pga = $_SESSION['password'];
+	if ($pgt != $admin_user || $pga != $admin_pass) {
+		header('Location: index.php');
+	}
 }
-if ($pga != $admin_pass) {
-header('Location: index.php');
-}
-}
+
+// Set empty error log
+$elog = "";
+
+// Load error messages (sent back from delete2.php)
 $er = $_GET['er'];
 if ($er == "inv") {
-$elog = "Not a valid game id.";
+  $elog = "Not a valid game id.";
 }
 if ($er == "ex") {
-$elog = "Game does not exist.";
+  $elog = "Game does not exist.";
 }
+if ($er == "updated") {
+  $elog = "Game was successfully updated/deleted.";
+}
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">

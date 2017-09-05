@@ -1,88 +1,132 @@
 <?php
-include("config.php");
 session_start();
+include("config.php");
+
+// Check to see if access valid and redirect as appropriate
 if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
 	header('Location: index.php');
 } else {
-$pgt = $_SESSION['username'];
-$pga = $_SESSION['password'];
-if ($pgt != $admin_user) {
-header('Location: index.php');
-}
-if ($pga != $admin_pass) {
-header('Location: index.php');
-}
+	$pgt = $_SESSION['username'];
+	$pga = $_SESSION['password'];
+	if ($pgt != $admin_user || $pga != $admin_pass) {
+		header('Location: index.php');
+	}
 }
 
-// If delete...
-if (isset($_POST['submit2'])) {
-$gid = $_GET['gid'];
-if ($gid != preg_replace('#[^0-9]+#i', '', $gid)) {
-header('Location: delete.php?er=inv');
-}
+// Check to see if delete submitted, redirect if ID invalid format
+if (isset($_POST['delete'])) {
+  $id = intval($_POST['gid']);
+  if ($id == 0) {
+    header('Location: delete.php?er=inv');
+  }
 
-// Find in db
-$query = "SELECT id FROM ".$tbprefix."games WHERE id = '$gid'";
-$result = mysql_query($query) or die ("<div align=\"center\">Problem connecting to database. <br /><br /><a href='delete.php'>Back</a></div>"); 
-$rows = mysql_numrows($result);
-if ($rows != 1) {
-header('Location: delete.php?er=ex');
-}
+  // Find in db
+  $query = "SELECT id FROM ".$tbprefix."games WHERE id = :id";
 
-// Delete png and swf
-$myFile = "../content/thumbnails/".$gid.".png";
-unlink($myFile);
-$myFile = "../content/".$gid.".swf";
-unlink($myFile);
+  // Load query results
+  try {
+    $statement = $conn->prepare($query);
+    $statement->execute(array('id' => $id));
+    // Use fetch to pick up first row
+    $result = $statement->fetch();
+    
+  } catch(PDOException $e) {
+    echo 'ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message;
+  }
 
-//Delete game from database
-$query = "DELETE FROM ".$tbprefix."games WHERE id='$gid'";
-$result = mysql_query($query) or die ("<div align=\"center\">Problem connecting to database.<br /><br /><a href='delete.php'>Back</a></div>");
-die ("<div align=\"center\">Game successfully deleted.<br /><br /><a href='delete.php'>Back</a></div>");
+  // Count rows returned
+  if ($statement->rowCount() != 1) {
+    header('Location: delete.php?er=ex');
+  }
+
+  // Delete png and swf
+  $myFile = "../content/thumbnails/".$id.".png";
+  unlink($myFile);
+  $myFile = "../content/".$id.".swf";
+  unlink($myFile);
+
+  // Delete game from database
+  $query = "DELETE FROM ".$tbprefix."games WHERE id=:id";
+  // Load query results
+  try {
+    $statement = $conn->prepare($query);
+    $statement->execute(array('id' => $id));
+    
+  } catch(PDOException $e) {
+    die('ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message);
+  }
+  
+  // Display successful message
+  die("<div align=\"center\">Game successfully deleted.<br /><br /><a href='delete.php'>Back</a></div>");
 }
 
 // If update...
 if (isset($_POST['update'])) {
-$gid = $_GET['gid'];
-if ($gid != preg_replace('#[^0-9]+#i', '', $gid)) {
-header('Location: delete.php?er=inv');
+  $id = intval($_POST['gid']);
+  if ($id == 0) {
+    header('Location: delete.php?er=inv');
+  }
+
+  // Find in db
+  $query = "SELECT id FROM ".$tbprefix."games WHERE id = :id";
+  // Load query results
+  try {
+    $statement = $conn->prepare($query);
+    $statement->execute(array('id' => $id));
+    // Use fetch to pick up first row
+    $result = $statement->fetch();
+    
+  } catch(PDOException $e) {
+    echo 'ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message;
+  }
+  
+  if ($statement->rowCount() != 1) {
+    header('Location: delete.php?er=ex&pgid='.$id);
+  }
+
+  // Update db
+  $query = "UPDATE ".$tbprefix."games SET title=:title, description=:description WHERE id=:id";
+  // Load query results
+  try {
+    $statement = $conn->prepare($query);
+    $statement->execute(array('title' => $_POST['title'],
+                              'id' => $id,
+                              'description' => $_POST['description']));
+    
+  } catch(PDOException $e) {
+    die('ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message);
+  }
+ 
+  header('Location: delete.php?er=updated&pgid='.$id);
 }
 
-// Find in db
-$query = "SELECT id FROM ".$tbprefix."games WHERE id = '$gid'";
-$result = mysql_query($query) or die ("<div align=\"center\">Problem connecting to database.<br /><br /><a href='delete.php'>Back</a></div>"); 
-$rows = mysql_numrows($result);
-if ($rows != 1) {
-header('Location: delete.php?er=ex');
-}
-
-// Update db
-$title = $_POST['title'];
-$description = $_POST['description'];
-$query = "UPDATE ".$tbprefix."games SET title='$title', description='$description' WHERE id = '$gid'";
-$result = mysql_query($query) or die ("<div align=\"center\">Problem connecting to database.<br /><br /><a href='delete.php'>Back</a></div>"); 
-header('Location: delete.php?pgid='.$gid);
-}
-
-// If view...
+// If view (sent from delete.php)
 if (isset($_POST['submit'])) {
-$gid = $_REQUEST['gid'];
-if ($gid != preg_replace('#[^0-9]+#i', '', $gid)) {
-header('Location: delete.php?er=inv');
-}
+  $id = intval($_REQUEST['gid']);
+  if ($id == 0) {
+    header('Location: delete.php?er=inv');
+  }
 
-// Find in db
-$query = "SELECT id, title, description FROM ".$tbprefix."games WHERE id = '$gid'";
-$result = mysql_query($query) or die ("<div align=\"center\">Problem connecting to database.<br /><br /><a href='delete.php'>Back</a></div>"); 
-$rows = mysql_numrows($result);
-if ($rows != 1) {
-header('Location: delete.php?er=ex');
-}
-}
+  // Find in db
+  $query = "SELECT id, title, description FROM ".$tbprefix."games WHERE id = :id";
+  // Load query results
+  try {
+    $statement = $conn->prepare($query);
+    $statement->execute(array('id' => $id));
+    // Use fetch to pick up first row
+    $result = $statement->fetch();
 
-// Else just get info from the last query
-$title = mysql_result($result, 0, 'title');
-$description = mysql_result($result, 0, 'description');
+    $title = $result['title'];
+    $description = $result['description'];
+    
+  } catch(PDOException $e) {
+    echo 'ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message;
+  }
+  
+  if ($statement->rowCount() != 1) {
+    header('Location: delete.php?er=ex');
+  }
+}
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -109,15 +153,15 @@ Frontend</a> | <a href="main.php">Admin Panel</a> (<a href="index.php?logout=1">
   <textarea name="description" id="description" cols="45" rows="5"><?php echo $description; ?></textarea>
 <p align="center">
     <object id="FlashID" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="550" height="400">
-      <param name="movie" value="../content/<?php echo $gid; ?>.swf" />
+      <param name="movie" value="../content/<?php echo $id; ?>.swf" />
       <param name="quality" value="high" />
       <param name="wmode" value="opaque" />
       <param name="swfversion" value="6.0.0.0" />
-      <!-- This param tag prompts users with Flash Player 6.0 r65 and higher to download the latest version of Flash Player. Delete it if you don’t want users to see the prompt. -->
+      <!-- This param tag prompts users with Flash Player 6.0 r65 and higher to download the latest version of Flash Player. Delete it if you donï¿½t want users to see the prompt. -->
       <param name="expressinstall" value="../includes/expressInstall.swf" />
       <!-- Next object tag is for non-IE browsers. So hide it from IE using IECC. -->
       <!--[if !IE]>-->
-      <object type="application/x-shockwave-flash" data="../content/<?php echo $gid; ?>.swf" width="550" height="400">
+      <object type="application/x-shockwave-flash" data="../content/<?php echo $id; ?>.swf" width="550" height="400">
         <!--<![endif]-->
         <param name="quality" value="high" />
         <param name="wmode" value="opaque" />
@@ -133,12 +177,12 @@ Frontend</a> | <a href="main.php">Admin Panel</a> (<a href="index.php?logout=1">
       <!--<![endif]-->
   </object>
   <p align="center">
-  <input name="gid" type="hidden" id="gid" value="<?php echo $gid; ?>" />
+  <input name="gid" type="hidden" id="gid" value="<?php echo $id; ?>" />
   <input type="submit" name="update" id="update" value="Update Game" />
   </p>
   <p align="center">or</p>
   <p align="center">
-    <input type="submit" alt="Delete Game" value="Delete Permanently" name="submit2" height="17" width="40" />
+    <input type="submit" alt="Delete Game" value="Delete Permanently" name="delete" height="17" width="40" />
   </p>
 </form>
 <p align="center"><a href="delete.php">Back</a></p>

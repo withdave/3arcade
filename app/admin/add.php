@@ -1,49 +1,65 @@
 <?php
-include("config.php");
 session_start();
+include("config.php");
+
+// Check to see if access valid and redirect as appropriate
 if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
 	header('Location: index.php');
-} else {	
-$pgt = $_SESSION['username'];
-$pga = $_SESSION['password'];	  
-if ($pgt != $admin_user) {
-header('Location: index.php');
-}
-if ($pga != $admin_pass) {
-header('Location: index.php');
-}
+} else {
+	$pgt = $_SESSION['username'];
+	$pga = $_SESSION['password'];
+	if ($pgt != $admin_user || $pga != $admin_pass) {
+		header('Location: index.php');
+	}
 }
 
 //If upload...
 if (isset($_POST['submit'])) {
 
-// Get latest game id
-$query = "SELECT id FROM ".$tbprefix."games ORDER BY CAST(id AS SIGNED) DESC LIMIT 0,1";
-$result = mysql_query($query) or die(mysql_error()); 
-$nextid = (mysql_result($result, 0, 'id')) + 1;
-// Upload game thumb
-$target_path = "../content/thumbnails";
-$target_path = $target_path . "/".$nextid.".png"; 
-if(move_uploaded_file($_FILES['thumbfile']['tmp_name'], $target_path)) {
-} else {
-die ("<div align=\"center\">There was an error uploading the thumbnail, please try again.<br /><br /><a href='add.php'>Back</a></div>");
-}
-// Upload game swf
-$target_path2 = "../content";
-$target_path2 = $target_path2 . "/".$nextid.".swf"; 
-if(move_uploaded_file($_FILES['gamefile']['tmp_name'], $target_path2)) {
-} else {
-die ("<div align=\"center\" >There was an error uploading the swf, please try again! <br /><br /><a href='add.php'>Back</a></div>");
-}
+  // Get latest game id
+  $query = "SELECT id FROM ".$tbprefix."games ORDER BY CAST(id AS SIGNED) DESC LIMIT 0,1";
+  // Load query results
+  try {
+      $statement = $conn->prepare($query);
+      $statement->execute();
+      $result = $statement->fetch();
+      
+  } catch(PDOException $e) {
+    echo 'ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message;
+  }
 
-// Add info to database
-$title = mysql_real_escape_string($_POST['title']);
-$description = mysql_real_escape_string($_POST['description']);
-$query = "INSERT INTO ".$tbprefix."games (id,title,description,rating,nov) VALUES ('$nextid','$title','$description',0,0)";
-$result = mysql_query($query) or die ("<div align=\"center\">Problem connecting to database. <br /><br /><a href='add.php'>Back</a></div>"); 
-  
-// Show success!
-die("<div align=\"center\">Game has been successfully added.<br /><br /><a href='add.php'>Back</a></div>");  
+  $nextid = $result['id'] + 1;
+  // Upload game thumb
+  $target_path = "../content/thumbnails";
+  $target_path = $target_path . "/".$nextid.".png"; 
+  if(move_uploaded_file($_FILES['thumbfile']['tmp_name'], $target_path)) {
+  } else {
+    die ("<div align=\"center\">There was an error uploading the thumbnail, please try again.<br /><br /><a href='add.php'>Back</a></div>");
+  }
+  // Upload game swf
+  $target_path2 = "../content";
+  $target_path2 = $target_path2 . "/".$nextid.".swf"; 
+  if(move_uploaded_file($_FILES['gamefile']['tmp_name'], $target_path2)) {
+  } else {
+    die ("<div align=\"center\" >There was an error uploading the swf, please try again! <br /><br /><a href='add.php'>Back</a></div>");
+  }
+
+  // Add info to database
+  $query = "INSERT INTO ".$tbprefix."games (id,title,description,rating,nov) VALUES (:id,:title,:description,0,0)";
+  // Load query results
+  try {
+    $statement = $conn->prepare($query);
+    $statement->execute(array('title' => $_POST['title'],
+                              'id' => $nextid,
+                              'description' => $_POST['description']));
+    
+    
+  } catch(PDOException $e) {
+    die('ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message);
+  }
+      
+  // Show success!
+  die("<div align=\"center\">Game has been successfully added.<br /><br /><a href='add.php'>Back</a></div>");  
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
