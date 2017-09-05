@@ -2,31 +2,40 @@
 session_start();
 include("config.php");
 
+// Check to see if access valid and redirect as appropriate
 if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
 	header('Location: index.php');
 } else {
-$pgt = $_SESSION['username'];
-$pga = $_SESSION['password'];
-if ($pgt != $admin_user) {
-header('Location: index.php');
-}
-if ($pga != $admin_pass) {
-header('Location: index.php');
-}
+	$pgt = $_SESSION['username'];
+	$pga = $_SESSION['password'];
+	if ($pgt != $admin_user || $pga != $admin_pass) {
+		header('Location: index.php');
+	}
 }
 
 // Update settings if needed
 if (isset($_POST['update'])) {
-$sitename = mysql_real_escape_string($_POST['sitename']);
-$homepagegames = mysql_real_escape_string($_POST['homepagegames']);
-$advert1on = mysql_real_escape_string($_POST['advert1on']);
-$advert1 = mysql_real_escape_string($_POST['advert1']);
-$advert2on = mysql_real_escape_string($_POST['advert2on']);
-$advert2 = mysql_real_escape_string($_POST['advert2']);
-$metatags = mysql_real_escape_string($_POST['metatags']);
-$query = "UPDATE ".$tbprefix."config SET sitename='$sitename', homepagegames='$homepagegames', advert1on='$advert1on', advert1='$advert1', advert2on='$advert2on', advert2='$advert2', metatags='$metatags'";
-$result = mysql_query($query) or die(mysql_error());
-header('Location: settings.php');
+
+  // Build query
+  $query = "UPDATE ".$tbprefix."config SET sitename=:sitename, homepagegames=:homepagegames, advert1on=:advert1on, advert1=:advert1, advert2on=:advert2on, advert2=:advert2, metatags=:metatags";
+  
+  // Load query results
+  try {
+    $statement = $conn->prepare($query);
+    $statement->execute(array('sitename' => $_POST['sitename'],
+                              'homepagegames' => $_POST['homepagegames'],
+                              'advert1on' => $_POST['advert1on'],
+                              'advert1' => $_POST['advert1'],
+                              'advert2on' => $_POST['advert2on'],            
+                              'advert2' => $_POST['advert2'],
+                              'metatags' => $_POST['metatags']));
+    
+    
+  } catch(PDOException $e) {
+    die('ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message);
+  }
+
+  header('Location: settings.php');
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

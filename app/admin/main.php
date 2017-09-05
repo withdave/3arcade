@@ -2,17 +2,15 @@
 session_start();
 include("config.php");
 
+// Check to see if access valid and redirect as appropriate
 if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
 	header('Location: index.php');
 } else {
-$pgt = $_SESSION['username'];
-$pga = $_SESSION['password'];
-if ($pgt != $admin_user) {
-header('Location: index.php');
-}
-if ($pga != $admin_pass) {
-header('Location: index.php');
-}
+	$pgt = $_SESSION['username'];
+	$pga = $_SESSION['password'];
+	if ($pgt != $admin_user || $pga != $admin_pass) {
+		header('Location: index.php');
+	}
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

@@ -1,13 +1,31 @@
 <?php
 // Include config file
 include("admin/config.php");
-// How many ACTIVE games in db?
-$query = "SELECT id, title FROM ".$tbprefix."games LIMIT 0, ".$settings['homepagegames'];
-$activegamedata = mysql_query($query) or die(mysql_error()); 
-$activegamenum = mysql_numrows($activegamedata);
-// Put games into array and shuffle
+// Select games in db limit between 0 and the number to be displayed on the homepage
+$query = "SELECT id, title FROM ".$tbprefix."games LIMIT 0, :homepagegames ";
+$homepagegames = intval($settings['homepagegames']);
+// Load query results
+try {
+    $statement = $conn->prepare($query);
+    $statement->bindParam(':homepagegames', $homepagegames, PDO::PARAM_INT);
+    //$statement->execute(array(':homepagegames' => $homepagegames));   // PHP Bug?
+    $statement->execute();
+    $result = $statement->fetchAll();
+    
+  } catch(PDOException $e) {
+    echo 'ERROR: ' . $db_error_mode ? $e->getMessage() : $db_error_message;
+  }
+
+// Put games into array and shuffle, and count
 $array = array();
-while ($row = mysql_fetch_assoc($activegamedata)) { $array[] = $row; } shuffle($array);
+$i = 0;
+foreach( $result as $row ) {
+    $array[] = $row;
+    $i++;
+}
+shuffle($array);
+$activegamenum = $i;
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -29,7 +47,7 @@ echo $settings['metatags'];
 // Display shuffled array, limited by homepage limit
 for ($i=0;$i<$settings['homepagegames'];$i++){
 ?>
-<a title="<?php echo $array[$i]['title']; ?>" href="play.php?id=<?php echo $array[$i]['id']; ?>&n=<?php echo $array[$i]['title']; ?>"><img src="content/thumbnails/<?php echo $array[$i]['id']; ?>.png" alt="<?php echo $array[$i]['title']; ?>" width="70" height="60" border="0" /></a> 
+<a title="<?php echo $array[$i]['title']; ?>" href="play.php?id=<?php echo $array[$i]['id']; ?>&amp;n=<?php echo $array[$i]['title']; ?>"><img src="content/thumbnails/<?php echo $array[$i]['id']; ?>.png" alt="<?php echo $array[$i]['title']; ?>" width="70" height="60" border="0" /></a> 
 <?php
 }
 ?>

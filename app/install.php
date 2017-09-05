@@ -15,7 +15,6 @@ $xadpass = $_POST['adpass'];
 if(trim($xdbhost) == '') {
 die("You need a database host.<br><br><a href='install.php'>Back</a>");
 }
-
 if(trim($xdbuser) == '') {
 die("You need a database user.<br><br><a href='install.php'>Back</a>");
 }
@@ -25,23 +24,23 @@ die("You need a database password.<br><br><a href='install.php'>Back</a>");
 if(trim($xdbname) == '') {
 die("You need a database name.<br><br><a href='install.php'>Back</a>");
 }
-
 if(trim($xaduser) == '') {
 die("You need an admin panel username.<br><br><a href='install.php'>Back</a>");
 }
-
 if(trim($xadpass) == '') {
 die("You need an admin panel password.<br><br><a href='install.php'>Back</a>");
 }
 
-// Connect to mySQL Server
-   $DBConn = mysql_connect($xdbhost,$xdbuser,$xdbpass) or die("Problem connecting to database.<br><br><a href='install.php'>Back</a>");
-   // Select mySQL Database
-   mysql_select_db($xdbname, $DBConn) or die("Problem connecting to database.<br><br><a href='install.php'>Back</a>");
-
+// Initiate a mySQL Database Connection
+try {
+  $conn = new PDO("mysql:host=" . $xdbhost . ";dbname=" . $xdbname, $xdbuser, $xdbpass);
+  $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+  die('ERROR: ' . $e->getMessage());
+}
 
 // Create config tables
-$sql = "
+$query = "
 CREATE TABLE IF NOT EXISTS ".$xpfix."config (
   sitename text NOT NULL,
   homepagegames int(11) NOT NULL,
@@ -52,18 +51,31 @@ CREATE TABLE IF NOT EXISTS ".$xpfix."config (
   metatags text NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 ";
-mysql_query($sql) or die ("Problem creating config tables."); 
+// Run query
+try {
+  $statement = $conn->prepare($query); 
+  $statement->execute(); 
+  
+} catch(PDOException $e) {
+  die('ERROR: ' . $e->getMessage());
+}
 
 // Insert config
-$sql = "
+$query = "
 INSERT INTO `".$xpfix."config` (`sitename`, `homepagegames`, `advert1on`, `advert1`, `advert2on`, `advert2`, `metatags`) VALUES
 ('ArcadeBlocks v2 Demo', 81, 1, 'Ad1', 1, 'Ad2', '<meta name=\"description\" content=\"ArcadeBlocks v2 is a simple, fast & easy to use Arcade Script\" />\r\n<meta name=\"keywords\" content=\"arcade script 3arcade\" />');
 ";
-
-mysql_query($sql) or die ("Problem inserting config data."); 
+// Run query
+try {
+  $statement = $conn->prepare($query); 
+  $statement->execute(); 
+  
+} catch(PDOException $e) {
+  die('ERROR: ' . $e->getMessage());
+}
 
 // Create games tables
-$sql = "
+$query = "
 CREATE TABLE IF NOT EXISTS ".$xpfix."games (
   id int(11) NOT NULL auto_increment,
   title text NOT NULL,
@@ -75,10 +87,17 @@ CREATE TABLE IF NOT EXISTS ".$xpfix."games (
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 ";
 
-mysql_query($sql) or die ("Problem creating games tables."); 
+// Run query
+try {
+  $statement = $conn->prepare($query); 
+  $statement->execute(); 
+  
+} catch(PDOException $e) {
+  die('ERROR: ' . $e->getMessage());
+}
 
 //Insert 141 games
-$sql = "
+$query = "
 INSERT INTO `".$xpfix."games` (`id`, `title`, `description`, `plays`, `rating`, `nov`) VALUES
 (1, 'Security 2', 'Avoid the guards and traps to escape!', 0, '0', '0'),
 (196, 'Pong 2000', 'Play Pong against the computer', 0, '0', '0'),
@@ -223,10 +242,17 @@ INSERT INTO `".$xpfix."games` (`id`, `title`, `description`, `plays`, `rating`, 
 (366, 'The Worm Race', 'Bet on the fastest worm in the worm race', 0, '0', '0');
 ";
 
-mysql_query($sql) or die ("Problem connecting to database/adding data 1.<br><br><a href='install.php'>Back</a>"); 
+// Run query
+try {
+  $statement = $conn->prepare($query); 
+  $statement->execute(); 
+  
+} catch(PDOException $e) {
+  die('ERROR: ' . $e->getMessage());
+}
 
 // Insert 91 more games
-$sql = "
+$query = "
 INSERT INTO `".$xpfix."games` (`id`, `title`, `description`, `plays`, `rating`, `nov`) VALUES
 (124, 'XRaye', 'Swing from post to post and turn the peg in this puzzle game', 0, '0', '0'),
 (122, 'The Indian Shikar', 'Just point and shoot the tiger.', 0, '0', '0'),
@@ -322,9 +348,16 @@ INSERT INTO `".$xpfix."games` (`id`, `title`, `description`, `plays`, `rating`, 
 (33, 'Steeplechase Challenge', 'Jump and whip at the corrct timing to beat the computer controlled horses', 0, '0', '0');
 ";
 
-mysql_query($sql) or die ("Problem connecting to database/adding data 3.<br><br><a href='install.php'>Back</a>"); 
+// Run query
+try {
+  $statement = $conn->prepare($query); 
+  $statement->execute(); 
+  
+} catch(PDOException $e) {
+  die('ERROR: ' . $e->getMessage());
+}
 
-$sql = "
+$query = "
 INSERT INTO `".$xpfix."games` (`id`, `title`, `description`, `plays`, `rating`, `nov`) VALUES
 (201, 'Astro Boy', 'Avoid hit by the asteriod and destroy it to survive', 0, '0', '0'),
 (202, 'Agent K', 'Passed all 3 training mission and become a real SWAT member.', 0, '0', '0'),
@@ -462,7 +495,14 @@ INSERT INTO `".$xpfix."games` (`id`, `title`, `description`, `plays`, `rating`, 
 (367, 'Balloony', 'Shoot anything that moved on your screens', 0, '0', '0');
 ";
 
-mysql_query($sql) or die ("Problem connecting to database/adding data 4.<br><br><a href='install.php'>Back</a>"); 
+// Run query
+try {
+  $statement = $conn->prepare($query); 
+  $statement->execute(); 
+  
+} catch(PDOException $e) {
+  die('ERROR: ' . $e->getMessage());
+}
 
 $filec = fopen("admin/config.php", "w");
 
@@ -472,21 +512,39 @@ $strText = '<?php
 
 //==============================
 // Site variables:
-$admin_user = "'.$xaduser.'"; //admin panel username
-$admin_pass = "'.$xadpass.'"; //admin panel password
-$dbhost = "'.$xdbhost.'"; // Database Server
-$dbuser = "'.$xdbuser.'"; // Database User
-$dbpass = "'.$xdbpass.'"; // Database Pass
-$dbname = "'.$xdbname.'"; // Database Name
-$tbprefix = "'.$xpfix.'"; //Table Prefix
+$admin_user = "'.$xaduser.'";   //admin panel username
+$admin_pass = "'.$xadpass.'";   //admin panel password
+
 //==============================
-// Initiate a mySQL Database Connection & Select db:
-$dbconn = mysql_connect($dbhost,$dbuser,$dbpass) or die("Problem connecting to database.");
-mysql_select_db($dbname, $dbconn) or die("Problem connecting to database.");
+// Database variables:
+$dbhost = "'.$xdbhost.'";       // Database Server
+$dbuser = "'.$xdbuser.'";       // Database User
+$dbpass = "'.$xdbpass.'";       // Database Pass
+$dbname = "'.$xdbname.'";       // Database Name
+$tbprefix = "'.$xpfix.'";       //Table Prefix
+$db_error_mode = 1;             // 1 = show DB error, 0 = show $db_error_message
+$db_error_message = "Problem connecting to database.";  // Message to show if $db_error_mode = 0
+
 //==============================
-// Get settings from db for site
-$query = "SELECT * FROM ".$tbprefix."config";
-$settings = mysql_fetch_array(mysql_query($query));
+// Initiate a mySQL Database Connection
+try {
+    $conn = new PDO("mysql:host=" . $dbhost . ";dbname=" . $dbname, $dbuser, $dbpass);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+    echo "ERROR: " . $db_error_mode ? $e->getMessage() : $db_error_message;
+}
+
+// Load settings from DB row
+try {
+    $query = "SELECT * FROM ".$tbprefix."config";
+    $statement = $conn->prepare($query); 
+    $statement->execute(); 
+    // Use fetch to pick up first row
+    $settings = $statement->fetch();
+    
+} catch(PDOException $e) {
+    echo "ERROR: " . $db_error_mode ? $e->getMessage() : $db_error_message;
+}
 //==============================
 ?>';
 
