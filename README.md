@@ -4,7 +4,7 @@ Repository for the revamped ArcadeBlocks HTML/Flash Arcade script
 
 3arcade builds on the free, open source arcade script created back in 2005, and was released around 2010.
 
-There is a game file package available at http://3cc.org
+There is a game file package available at https://withdave.com/3arcade-arcade-script/
 
 ## Installation
 
